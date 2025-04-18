@@ -2,6 +2,12 @@ const { Client } = require('pg');
 require('dotenv').config();
 
 async function createDatabase() {
+  // Skip database creation if using DATABASE_URL (for Render)
+  if (process.env.DATABASE_URL) {
+    console.log('Using DATABASE_URL for connection, skipping database creation');
+    return;
+  }
+
   // Connect to postgres to create the database
   const adminClient = new Client({
     user: process.env.DB_USERNAME || 'postgres',

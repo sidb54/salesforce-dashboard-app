@@ -4,17 +4,13 @@ This guide provides instructions for deploying the Salesforce Dashboard applicat
 
 ## Backend Deployment (Render)
 
-1. **Create a Render account**: 
-   - Sign up at [render.com](https://render.com)
-
-2. **Set up PostgreSQL database**:
+1. **Set up PostgreSQL database**:
    - Go to "New" > "PostgreSQL"
-   - Choose a name: `salesforce-dashboard-db`
-   - Choose the free plan
+   - Create the DB: `salesforce-dashboard-db`
    - Note your database credentials (URL, user, password)
 
-3. **Set up Web Service**:
-   - Go to "New" > "Web Service"
+2. **Set up Web Service**:
+   - Add a web service
    - Connect to your GitHub repository
    - Name: `salesforce-dashboard-api`
    - Build Command: `cd server && npm install && npm run build`
@@ -34,21 +30,15 @@ This guide provides instructions for deploying the Salesforce Dashboard applicat
      SF_SECURITY_TOKEN=your_salesforce_security_token
      SF_CLIENT_ID=your_salesforce_connected_app_client_id
      SF_CLIENT_SECRET=your_salesforce_connected_app_client_secret
-     SF_REDIRECT_URI=https://your-render-app.onrender.com/api/salesforce/callback
-     FRONTEND_URL=https://your-netlify-app.netlify.app
+     SF_REDIRECT_URI=render_host_name/api/salesforce/callback
+     FRONTEND_URL=netlify_app_uri
      ```
-
-4. **Update CORS settings**:
-   - Ensure your CORS settings in the backend allow your frontend domain
 
 ## Frontend Deployment (Netlify)
 
-1. **Create a Netlify account**:
-   - Sign up at [netlify.com](https://netlify.com)
-
-2. **Deploy your frontend**:
-   - Go to "New site from Git"
-   - Connect to your GitHub repository
+1. **Deploy your frontend**:
+   - New site from Git
+   - Connect to your repo
    - Base directory: `client`
    - Build command: `npm run build`
    - Publish directory: `build`
@@ -56,10 +46,6 @@ This guide provides instructions for deploying the Salesforce Dashboard applicat
      ```
      REACT_APP_API_URL=https://your-render-app.onrender.com/api
      ```
-
-3. **Configure Custom Domain (Optional)**:
-   - In Netlify, go to Site settings > Domain management
-   - Add custom domain if you have one
 
 ## Important Cross-Origin Considerations
 
@@ -88,18 +74,7 @@ When deploying across different domains (frontend on Netlify, backend on Render)
    axios.defaults.withCredentials = true;
    ```
 
-## Post-Deployment Steps
-
-1. **Run database migrations**:
-   - Connect to your deployed app's terminal
-   - Run: `node src/migrations/add-refresh-token.js`
-
-2. **Test authentication and Salesforce connection**:
-   - Register a new account
-   - Login with credentials
-   - Check that Salesforce data is loading correctly
-
-## Troubleshooting
+## Quick troubleshooting
 
 - **CORS issues**: Check that your CORS settings include the correct frontend URL
 - **Cookie problems**: Ensure cookies are configured with the right settings (secure, sameSite)

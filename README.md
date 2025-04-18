@@ -41,7 +41,6 @@ A full-stack web application for retrieving and displaying Salesforce data.
 
 ### Database Setup
 1. Create a PostgreSQL database named `salesforce_dashboard`
-2. Run the migration scripts in `/server/src/migrations/`
 
 ### Backend Configuration
 1. Navigate to `/server`
@@ -86,7 +85,3 @@ A full-stack web application for retrieving and displaying Salesforce data.
 ## Deployment
 
 For deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
-
-## License
-
-MIT 
