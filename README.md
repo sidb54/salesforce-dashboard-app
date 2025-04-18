@@ -86,7 +86,3 @@ A full-stack web application for retrieving and displaying Salesforce data.
 ## Deployment
 
 For deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
-
-## License
-
-MIT 

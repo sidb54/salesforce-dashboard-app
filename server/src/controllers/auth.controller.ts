@@ -3,12 +3,10 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/user.model';
 import crypto from 'crypto';
 
-// Generate refresh token
 const generateRefreshToken = (): string => {
   return crypto.randomBytes(40).toString('hex');
 };
 
-// Register a new user
 export const register = async (req: Request, res: Response) => {
   try {
     const { email, password, firstName, lastName } = req.body;
@@ -19,10 +17,8 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Email already in use' });
     }
 
-    // Generate refresh token
     const refreshToken = generateRefreshToken();
 
-    // Create new user
     const user = await User.create({
       email,
       password,
@@ -31,13 +27,11 @@ export const register = async (req: Request, res: Response) => {
       refreshToken,
     });
 
-    // Generate JWT token
     const token = generateToken(user);
 
     // Set HTTP-only cookie with refresh token
     setRefreshTokenCookie(res, refreshToken);
 
-    // Return user data and token
     return res.status(201).json({
       id: user.id,
       email: user.email,
@@ -62,20 +56,15 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Verify password
     const isValidPassword = await user.validPassword(password);
     if (!isValidPassword) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generate new refresh token
     const refreshToken = generateRefreshToken();
-    
-    // Save refresh token to user
     user.refreshToken = refreshToken;
     await user.save();
 
-    // Generate JWT token
     const token = generateToken(user);
 
     // Set HTTP-only cookie with refresh token
@@ -116,17 +105,27 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 // Refresh token
 export const refreshAccessToken = async (req: Request, res: Response) => {
   try {
+    console.log('Headers:', req.headers);
+    console.log('Cookies received:', req.cookies);
+    
     // Get refresh token from cookie
     const refreshToken = req.cookies.refreshToken;
     
     if (!refreshToken) {
-      return res.status(401).json({ message: 'Refresh token required' });
+      return res.status(401).json({ message: 'No refresh token found in cookies' });
     }
 
     // Find user with this refresh token
     const user = await User.findOne({ where: { refreshToken } });
     
     if (!user) {
+      // Clear invalid cookie
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none' as const,
+        path: '/'
+      });
       return res.status(401).json({ message: 'Invalid refresh token' });
     }
 
@@ -150,13 +149,17 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
 // Logout user
 export const logout = async (req: Request, res: Response) => {
   try {
-    // Clear refresh token cookie
-    res.clearCookie('refreshToken');
+    // Clear refresh token cookie with proper options
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none' as const,
+      path: '/'
+    });
     
-    // If user is authenticated, clear their refresh token
     if (req.user) {
       const user = req.user as User;
-      user.refreshToken = ''; // Using empty string instead of null
+      user.refreshToken = '';
       await user.save();
     }
     
@@ -172,9 +175,10 @@ const setRefreshTokenCookie = (res: Response, token: string): void => {
   // Cookie options
   const cookieOptions = {
     httpOnly: true, // Cannot be accessed by JavaScript
-    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    sameSite: 'strict' as const,
+    secure: true, // Always use secure cookies with Netlify
+    sameSite: 'none' as const, // Must be 'none' for cross-origin requests
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    path: '/' // Ensure cookie is available on all paths
   };
   
   // Set cookie

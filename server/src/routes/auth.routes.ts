@@ -6,7 +6,6 @@ import passport from 'passport';
 
 const router: Router = express.Router();
 
-// Register route
 router.post(
   '/register',
   [
@@ -28,7 +27,6 @@ router.post(
   }
 );
 
-// Login route
 router.post(
   '/login',
   [
@@ -42,20 +40,6 @@ router.post(
     } catch (error) {
       console.error('Login route error:', error);
       res.status(500).json({ message: 'Login failed' });
-    }
-  }
-);
-
-// Check if user is authenticated
-router.get(
-  '/me',
-  passport.authenticate('jwt', { session: false }),
-  async (req: Request, res: Response) => {
-    try {
-      await authController.getCurrentUser(req, res);
-    } catch (error) {
-      console.error('Get current user route error:', error);
-      res.status(500).json({ message: 'Failed to get user data' });
     }
   }
 );
