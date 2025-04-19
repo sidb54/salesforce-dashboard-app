@@ -28,10 +28,8 @@ export const getAccounts = async (req: Request, res: Response) => {
       };
     };
 
-    // Get Salesforce connection
     let conn = await getSalesforceConnection();
 
-    // Try to execute the query
     let queryResults;
 
     try {
@@ -49,7 +47,6 @@ export const getAccounts = async (req: Request, res: Response) => {
         // Retry the query with the new connection
         queryResults = await executeQueries(conn);
       } else {
-        // If it's another type of error, rethrow it
         throw queryError;
       }
     }

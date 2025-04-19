@@ -1,30 +1,26 @@
 import * as jsforce from 'jsforce';
 
-// Token storage interface
 interface TokenStorage {
   accessToken: string;
   instanceUrl: string;
-  expiresAt: number; // timestamp when token expires
+  expiresAt: number;
 }
 
-// In-memory token storage (singleton)
+// In-memory token storage
 let tokenCache: TokenStorage | null = null;
 
-// Singleton connection
 let sfConnection: jsforce.Connection | null = null;
 
-// Save tokens to memory
 const saveTokens = (tokens: TokenStorage): void => {
   tokenCache = tokens;
   console.log('Salesforce tokens saved in memory');
 };
 
-// Load tokens from memory
 const loadTokens = (): TokenStorage | null => {
   return tokenCache;
 };
 
-// Initialize Salesforce connection using OAuth2 Resource Owner Password Credential flow
+// Initialize Salesforce connection using standard username/password login
 export const getSalesforceConnection = async (): Promise<jsforce.Connection> => {
   if (sfConnection && sfConnection.accessToken) {
     const tokens = loadTokens();
@@ -37,76 +33,38 @@ export const getSalesforceConnection = async (): Promise<jsforce.Connection> => 
   const username = process.env.SF_USERNAME;
   const password = process.env.SF_PASSWORD;
   const securityToken = process.env.SF_SECURITY_TOKEN || '';
-  const clientId = process.env.SF_CLIENT_ID;
-  const clientSecret = process.env.SF_CLIENT_SECRET;
-  const redirectUri = process.env.SF_REDIRECT_URI;
   const loginUrl = process.env.SF_LOGIN_URL || 'https://login.salesforce.com';
 
-  if (!username || !password || !clientId || !clientSecret) {
+  if (!username || !password) {
     throw new Error('Salesforce credentials not configured');
   }
 
-  // Create connection with OAuth2 configuration
-  const conn = new jsforce.Connection({
-    loginUrl,
-    oauth2: {
-      clientId,
-      clientSecret,
-      redirectUri
-    }
-  });
-
   try {
-    const userInfo = await conn.login(username, password + securityToken);
-        sfConnection = conn;
+    // Create connection with standard login
+    const conn = new jsforce.Connection({ loginUrl });
+    await conn.login(username, password + securityToken);
+    
+    // Save the connection and token information
+    sfConnection = conn;
     
     if (conn.accessToken && conn.instanceUrl) {
       const tokens: TokenStorage = {
         accessToken: conn.accessToken,
         instanceUrl: conn.instanceUrl,
-        expiresAt: Date.now() + (2 * 60 * 60 * 1000) // Default 2-hour expiry
+        expiresAt: Date.now() + (2 * 60 * 60 * 1000)
       };
       
       saveTokens(tokens);
     }
     
-    console.log('Successfully authenticated with Salesforce OAuth2');
-    console.log(`User ID: ${userInfo.id}`);
-    console.log(`Org ID: ${userInfo.organizationId}`);
-    
+    console.log('Successfully authenticated with Salesforce');
     return conn;
   } catch (error) {
     console.error('Failed to authenticate with Salesforce:', error);
-    
-    // Try standard login as fallback if OAuth fails
-    try {
-      console.log('Attempting standard login as fallback...');
-      const standardConn = new jsforce.Connection({ loginUrl });
-      await standardConn.login(username, password + securityToken);
-      
-      // Save the connection and token information
-      sfConnection = standardConn;
-      
-      if (standardConn.accessToken && standardConn.instanceUrl) {
-        const tokens: TokenStorage = {
-          accessToken: standardConn.accessToken,
-          instanceUrl: standardConn.instanceUrl,
-          expiresAt: Date.now() + (2 * 60 * 60 * 1000) // Default 2-hour expiry
-        };
-        
-        saveTokens(tokens);
-      }
-      
-      console.log('Successfully authenticated with Salesforce using standard login');
-      return standardConn;
-    } catch (fallbackError) {
-      console.error('Fallback authentication also failed:', fallbackError);
-      throw fallbackError;
-    }
+    throw error;
   }
 };
 
-// Clear tokens and reset connection
 export const clearSalesforceConnection = (): void => {
   tokenCache = null;
   sfConnection = null;
