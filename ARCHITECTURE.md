@@ -13,7 +13,7 @@ The Salesforce Dashboard is a full-stack web application with a clear separation
 - Implemented token refresh mechanism for seamless user experience
 
 ### 2. Salesforce Integration
-- Created a secure connection to Salesforce using OAuth 2.0
+- Created a secure connection to Salesforce using interacting client's Username Password login.
 - Implemented server-side API to proxy Salesforce requests
 - Added data pagination for handling large datasets efficiently
 - Used React Query for optimized data fetching with caching
